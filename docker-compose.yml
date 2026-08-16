@@ -1,0 +1,95 @@
+# ============================================================================
+# OLm-Mn-wed — Docker Compose
+#
+# Two containers:
+#   webapp : built Vue frontend + FastAPI backend
+#            (Web UI on :3000, optional OpenAI-compatible API on :3001)
+#   ollama : official ollama/ollama image, internal network only
+#
+# Shared model directory:
+#   host ./models  ->  /models     (ollama container view)
+#   host ./models  ->  /app/models (webapp container view)
+#
+# Quick start:
+#   docker compose up --build
+#   open http://localhost:3000   (admin password printed in webapp logs)
+#
+# Multi-arch build (ARM64 + AMD64):
+#   docker buildx build --platform linux/amd64,linux/arm64 -t olm-mn-wed:latest .
+# ============================================================================
+
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: olm-mn-wed:latest
+    container_name: olm-mn-wed-webapp
+    ports:
+      - "${WEB_PORT:-3000}:3000"   # Web UI
+      - "${API_PORT:-3001}:3001"   # OpenAI-compatible API (optional service)
+    environment:
+      # Ollama is only reachable inside the compose network
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      # SQLite database lives on the host ./data volume
+      DATABASE_PATH: "/app/data/olmwed.db"
+      # GGUF uploads / local model files (webapp container view)
+      MODELS_DIR: "/app/models"
+      WEB_PORT: "3000"
+      API_PORT: "3001"
+      API_ENABLED: "true"
+      # Empty -> auto-generated and persisted to ./data/.secret_key
+      SECRET_KEY: "${SECRET_KEY:-}"
+      TZ: "${TZ:-UTC}"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: olm-mn-wed-ollama
+    # Intentionally NOT exposed to the host; reachable only as
+    # http://ollama:11434 inside the compose network.
+    # Uncomment to expose Ollama directly (not recommended):
+    # ports:
+    #   - "11434:11434"
+    volumes:
+      - ./models:/models
+    environment:
+      # Store all model blobs inside the shared ./models volume so the
+      # webapp sees the same files under /app/models
+      OLLAMA_MODELS: "/models"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+    # ------------------------------------------------------------------------
+    # GPU acceleration (optional) — full instructions in README
+    # ------------------------------------------------------------------------
+    # NVIDIA GPU (requires nvidia-container-toolkit installed on the host):
+    #   deploy:
+    #     resources:
+    #       reservations:
+    #         devices:
+    #           - driver: nvidia
+    #             count: all
+    #             capabilities: [gpu]
+    #
+    # AMD GPU (use the ROCm image instead):
+    #   image: ollama/ollama:rocm
+    #   devices:
+    #     - /dev/kfd
+    #     - /dev/dri
+    #
+    # CPU-only: leave as-is — nothing else is needed.
+    restart: unless-stopped
+
+networks:
+  default:
+    name: olm-mn-wed-net

@@ -1,0 +1,2 @@
+# GGUF model files live here.
+# Mounted at /models (ollama container) and /app/models (webapp container).

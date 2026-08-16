@@ -1,0 +1,28 @@
+# ---- Web framework ----
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# ---- Database ----
+sqlalchemy==2.0.36
+
+# ---- Validation / settings ----
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# ---- Auth ----
+PyJWT==2.10.1
+bcrypt==4.2.1
+
+# ---- HTTP client (Ollama API) ----
+httpx==0.28.1
+
+# ---- Knowledge base (RAG) ----
+numpy==1.26.4
+pypdf==5.1.0
+
+# ---- Config file editing (llama-swap auto-register) ----
+PyYAML==6.0.2
+
+# ---- Uploads / misc ----
+python-multipart==0.0.20
+aiofiles==24.1.0

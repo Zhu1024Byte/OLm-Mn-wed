@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Glassmorphism helpers — reused across the whole app
+--------------------------------------------------------------------------- */
+@layer components {
+  .glass {
+    @apply border border-white/40 bg-white/60 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50;
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl;
+  }
+
+  .glass-input {
+    @apply w-full rounded-xl border border-white/30 bg-white/40 px-4 py-2.5 text-sm text-slate-800 outline-none backdrop-blur-md transition placeholder:text-slate-400 focus:border-accent/60 focus:ring-2 focus:ring-accent/30 dark:border-white/10 dark:bg-white/5 dark:text-slate-100;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/30 transition hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Thin, glassy scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.4);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184 / 0.6);
+}
+
+/* Simple fade-in used by views */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.35s ease both;
+}

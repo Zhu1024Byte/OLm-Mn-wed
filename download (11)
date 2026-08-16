@@ -1,0 +1,35 @@
+# ---- Node ----
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ---- Runtime data & secrets (any level) ----
+**/data/*.db
+**/data/*.db-*
+**/data/.secret_key
+**/data/admin_credentials.txt
+**/data/knowledge/
+**/data/settings.json
+**/data/model_files.json
+.env
+*.log
+
+# ---- Deployment notes (contains server-specific info) ----
+DEPLOYMENT.md
+
+# ---- Models (GGUF files are large) ----
+models/*
+!models/.gitkeep
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

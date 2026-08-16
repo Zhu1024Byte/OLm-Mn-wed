@@ -1,0 +1,56 @@
+# ============================================================================
+# Build & publish the OLm-Mn-wed webapp image to GHCR
+#   ghcr.io/<owner>/olm-mn-wed:latest  (linux/amd64 + linux/arm64)
+#
+# Triggers: push to main, or manual run (Actions -> Run workflow)
+# After this workflow succeeds, run the image with a single command:
+#   docker run -d -p 3000:3000 -p 3001:3001 \
+#     -e OLLAMA_BASE_URL=http://<ollama-ip>:11434 \
+#     -v $(pwd)/models:/app/models -v $(pwd)/data:/app/data \
+#     --name olm-mn-wed ghcr.io/<owner>/olm-mn-wed:latest
+# ============================================================================
+name: Build & Publish Docker Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/olm-mn-wed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (multi-arch)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (amd64 + arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

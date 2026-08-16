@@ -1,0 +1,56 @@
+# ============================================================================
+# OLm-Mn-wed — 镜像版一键编排（无需 clone 项目源码 / 无需构建）
+#
+# 方式 A（推荐，curl 拉取即用）:
+#   curl -o docker-compose.yml https://raw.githubusercontent.com/Zhu1024Byte/OLm-Mn-wed/main/docker-compose.prod.yml
+#   docker compose up -d
+#
+# 方式 B（docker compose 直接引用远程文件）:
+#   docker compose -f https://raw.githubusercontent.com/Zhu1024Byte/OLm-Mn-wed/main/docker-compose.prod.yml up -d
+#
+# 之后: docker compose logs webapp | grep -A 4 "password"  (查看 admin 密码)
+#       浏览器打开 http://localhost:3000
+#
+# 说明: 本文件使用已发布镜像 (ghcr.io/zhu1024byte/olm-mn-wed)，不执行任何本地构建。
+#       模型目录 ./models 同时挂载给 ollama(/models) 与 webapp(/app/models)。
+# ============================================================================
+
+services:
+  webapp:
+    image: ghcr.io/zhu1024byte/olm-mn-wed:latest
+    container_name: olm-mn-wed-webapp
+    ports:
+      - "${WEB_PORT:-3000}:3000"   # Web UI
+      - "${API_PORT:-3001}:3001"   # OpenAI 兼容 API
+    environment:
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      DATABASE_PATH: "/app/data/olmwed.db"
+      MODELS_DIR: "/app/models"
+      API_ENABLED: "true"
+      SECRET_KEY: "${SECRET_KEY:-}"
+      TZ: "${TZ:-UTC}"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: olm-mn-wed-ollama
+    # 不对外暴露端口，仅 webapp 内部访问
+    volumes:
+      - ./models:/models
+    environment:
+      OLLAMA_MODELS: "/models"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+    # NVIDIA GPU（安装 nvidia-container-toolkit 后取消注释）:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    restart: unless-stopped
